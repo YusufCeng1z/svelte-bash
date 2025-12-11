@@ -1,6 +1,6 @@
 {
 	"name": "svelte-bash",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "A fully typed, customizable, and lightweight terminal component for Svelte 5.",
 	"type": "module",
 	"license": "MIT",

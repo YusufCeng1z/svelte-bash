@@ -258,8 +258,6 @@
     .svelte-bash-terminal {
         width: 100%;
         height: 100%;
-        min-height: 300px;
-        max-height: 500px;
         overflow-y: auto;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
             "Liberation Mono", "Courier New", monospace;

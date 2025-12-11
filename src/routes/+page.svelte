@@ -20,7 +20,7 @@
         socials: async () => "GitHub: github.com/username\nTwitter: @username",
     };
 
-    const codeExample = `<div class="h-[400px]">
+    const codeExample = `<div style="height: 400px">
   <Terminal 
      structure={myFiles}
      commands={myCommands}
@@ -370,6 +370,7 @@
 &lt;Terminal 
     structure={`{`}<span class="text-yellow-400">files</span>{`}`} 
     user="alice" 
+    style="height: 300px"
 /&gt;</code
                             ></pre>
                     </div>
@@ -384,7 +385,7 @@
                             }}
                             welcomeMessage="Default setup. Type 'ls' or 'cat readme.md'"
                             user="alice"
-                            class="h-[300px]"
+                            style="height: 300px; width: 100%;"
                         />
                     </div>
                 </div>
@@ -433,8 +434,10 @@
   {`}`}
 {`}`};
 
-&lt;Terminal commands={`{`}<span class="text-green-400">cmds</span
-                                        >{`}`} /&gt;</code
+&lt;Terminal 
+   commands={`{`}<span class="text-green-400">cmds</span>{`}`} 
+   style="height: 300px" 
+/&gt;</code
                                     ></pre>
                             </div>
                         </div>
@@ -448,7 +451,7 @@
                                     time: () => new Date().toLocaleTimeString(),
                                 }}
                                 welcomeMessage="Type 'greet [name]' or 'time'"
-                                class="h-[250px]"
+                                style="height: 250px; width: 100%;"
                             />
                         </div>
                     </div>
@@ -469,7 +472,7 @@
                                         output: "[main 2d3f4a] wip",
                                     },
                                 ]}
-                                class="h-[250px]"
+                                style="height: 250px; width: 100%;"
                             />
                         </div>
                         <div class="space-y-4 order-2">
@@ -493,6 +496,7 @@
       output: '...' 
     {`}`}
   {`]}`}
+  style="height: 300px"
 /&gt;</code
                                     ></pre>
                             </div>
@@ -523,6 +527,7 @@
     prompt: '#ff79c6',
     cursor: '#f8f8f2'
   {`}}`}
+  style="height: 300px"
 /&gt;</code
                                     ></pre>
                             </div>
@@ -538,7 +543,7 @@
                                     foreground: "#f8f8f2",
                                 }}
                                 welcomeMessage="Custom Dracula Variant"
-                                class="h-[250px]"
+                                style="height: 250px; width: 100%;"
                             />
                         </div>
                     </div>
