@@ -18,7 +18,6 @@
 
   <p>
     <img src="https://img.shields.io/npm/v/svelte-bash?style=flat-square&color=blue" alt="NPM Version" />
-    <img src="https://img.shields.io/bundlephobia/minzip/svelte-bash?style=flat-square&color=green" alt="Bundle Size" />
     <img src="https://img.shields.io/npm/l/svelte-bash?style=flat-square&color=orange" alt="License" />
     <img src="https://img.shields.io/badge/Svelte-5-orange?style=flat-square&logo=svelte" alt="Svelte 5" />
     <img src="https://img.shields.io/badge/Zero_Dependency-Used_Vanilla_CSS-blueviolet?style=flat-square" alt="Zero Dependency" />
@@ -69,7 +68,8 @@ Import the component and pass a `structure` object to define the virtual file sy
 
 <Terminal 
     structure={fileSystem} 
-    user="guest" 
+    user="guest"
+    style="height: 300px"
 />
 ```
 
