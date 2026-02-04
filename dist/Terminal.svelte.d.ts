@@ -25,6 +25,12 @@ declare const Terminal: $$__sveltets_2_IsomorphicComponent<{
     }[] | undefined;
     autoplayLoop?: boolean | undefined;
     typingSpeed?: number | undefined;
+    bootplay?: {
+        output: string | string[] | import("svelte").Component;
+        delay?: number;
+    }[] | undefined;
+    bootplayLoop?: boolean | undefined;
+    bootSpeed?: number | undefined;
     class?: string | undefined;
 }, {
     [evt: string]: CustomEvent<any>;
