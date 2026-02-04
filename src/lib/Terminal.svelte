@@ -13,6 +13,9 @@
     export let autoplay: TerminalProps["autoplay"] = undefined;
     export let autoplayLoop: boolean = true;
     export let typingSpeed: number = 50;
+    export let bootplay: TerminalProps["bootplay"] = undefined;
+    export let bootplayLoop: boolean = false;
+    export let bootSpeed: number = 10; // fast by default
 
     // Style Props
     let clazz: string = "";
@@ -55,6 +58,9 @@
         if (welcomeMessage) {
             addToHistory({ type: "output", content: welcomeMessage });
         }
+        if (bootplay && bootplay.length > 0) {
+            runBootplay();
+        }
         if (autoplay && autoplay.length > 0) {
             runAutoplay();
         }
@@ -78,6 +84,17 @@
             if (!autoplayLoop) break;
             history = [];
             await sleep(500);
+        }
+    }
+    async function runBootplay() {
+        while (true) {
+            for (const item of bootplay!) {
+                addToHistory({ type: "output", content: item.output });
+                await sleep(item.delay ?? bootSpeed);
+            }
+            if (!bootplayLoop) break;
+            history = [];
+            await sleep(300);
         }
     }
 
@@ -217,7 +234,7 @@
     {/each}
 
     <!-- ACTIVE INPUT LINE -->
-    {#if !autoplay}
+    {#if !autoplay && !bootplay}
         <div class="input-line">
             <span
                 class="prompt-label shrink-0"
@@ -236,7 +253,7 @@
                 autofocus
             />
         </div>
-    {:else}
+    {:else if autoplay}
         <div class="input-line">
             <span
                 class="prompt-label shrink-0"
@@ -250,6 +267,13 @@
                 style="background-color: {activeTheme.cursor};"
             ></span>
         </div>
+    {:else}
+    <div class="input-line">
+        <span
+            class="cursor-block"
+            style="background-color: {activeTheme.cursor};"
+        ></span>
+    </div>
     {/if}
 </div>
 

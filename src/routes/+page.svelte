@@ -502,7 +502,6 @@
                             </div>
                         </div>
                     </div>
-
                     <!-- Feature C: Theming -->
                     <div
                         class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center"
@@ -546,6 +545,61 @@
                                 style="height: 250px; width: 100%;"
                             />
                         </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Feature D: Bootplay -->
+            <div
+                class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center"
+            >
+                <div
+                    class="order-1 rounded-xl overflow-hidden shadow-lg ring-1 ring-slate-900/10"
+                >
+                    <Terminal
+                        theme="dracula"
+                        bootplay={[
+                            { output: "Booting ExampleOS 0.1.0 (x86_64)..." },
+                            {
+                                output: "Starting systemd-256.4...",
+                                delay: 200,
+                            },
+                            { output: "[  OK  ] Started User Login Management." },
+                            { output: "[  OK  ] Reached target Network." },
+                            { output: "Welcome to ExampleOS!" },
+                            {
+                                output: "Starting graphical user interface...",
+                                delay: 3000,
+                            },
+                        ]}
+                        bootplayLoop={true}
+                        style="height: 250px; width: 100%;"
+                    />
+                </div>
+                <div class="space-y-4 order-2">
+                    <h3 class="text-xl font-bold text-slate-900">
+                        Bootplay / OS Boot simulation
+                    </h3>
+                    <p class="text-slate-600">
+                        Useful feature for simulating OS boot process.
+                    </p>
+                    <div
+                        class="rounded-lg bg-[#09090b] border border-slate-800 shadow-lg p-5 text-xs"
+                    >
+                        <pre
+                            class="font-mono text-blue-100 overflow-x-auto"><code
+                                >&lt;Terminal
+<span class="text-purple-400">bootplay</span>={`{[`}
+{`{`} output: 'Booting ExampleOS 0.1.0 (x86_64)' {`}`},
+{`{`}
+output: 'Starting systemd-256.4...',
+delay: 200
+{`}`},
+{`{`} output: '[  OK  ] Started User Login Management.' {`}`},
+...
+{`]}`}
+style="height: 300px"
+/&gt;</code
+                            ></pre>
                     </div>
                 </div>
             </div>

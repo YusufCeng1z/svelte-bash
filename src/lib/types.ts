@@ -115,6 +115,26 @@ export interface TerminalProps {
     typingSpeed?: number;
 
     /**
+     * Bootplay script for "OS Boot Mode".
+     * Unlike autoplay, it does not type commands — it only streams output lines.
+     * If provided, the terminal becomes read-only and plays this script.
+     */
+    bootplay?: { output: string | string[] | Component; delay?: number }[];
+
+    /**
+     * Whether to loop the bootplay script.
+     * @default false
+     */
+    bootplayLoop?: boolean;
+
+    /**
+     * Base speed in milliseconds between bootplay output lines.
+     * Individual items can override using `delay`.
+     * @default 10
+     */
+    bootSpeed?: number;
+
+    /**
      * Additional CSS classes for the terminal container.
      */
     class?: string;
