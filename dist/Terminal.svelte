@@ -22,6 +22,10 @@
     let history: TerminalLine[] = [];
     let currentInput = "";
 
+    // Event Dispatcher
+    import { createEventDispatcher } from "svelte";
+    const dispatch = createEventDispatcher();
+
     // Input history state
     let inputHistory: string[] = [];
     let historyIndex = -1;
@@ -42,6 +46,11 @@
     // Shell Logic Instance
     const shell = new Shell(structure, commands, user);
 
+    // Export shell for external access
+    export function getShell() {
+        return shell;
+    }
+
     // Reactivity for props -> Shell
     $: if (structure) shell.setStructure(structure);
     $: if (commands) shell.setCommands(commands);
@@ -55,6 +64,12 @@
         if (welcomeMessage) {
             addToHistory({ type: "output", content: welcomeMessage });
         }
+
+        // Listen for shell changes
+        shell.on("change", (newStructure: any) => {
+            dispatch("change", newStructure);
+        });
+
         if (autoplay && autoplay.length > 0) {
             runAutoplay();
         }
@@ -63,8 +78,9 @@
     async function runAutoplay() {
         while (true) {
             for (const item of autoplay!) {
-                await typeCommand(item.command);
-                await sleep(500);
+                const speed = item.typingSpeed || typingSpeed;
+                await typeCommand(item.command, speed);
+                await sleep(item.delayAfter || 500);
 
                 addToHistory({ type: "command", content: item.command });
                 currentInput = "";
@@ -73,7 +89,7 @@
                     await sleep(200);
                     addToHistory({ type: "output", content: item.output });
                 }
-                await sleep(1000);
+                await sleep(1000); // Base delay between commands
             }
             if (!autoplayLoop) break;
             history = [];
@@ -81,11 +97,11 @@
         }
     }
 
-    async function typeCommand(cmd: string) {
+    async function typeCommand(cmd: string, speed: number) {
         currentInput = "";
         for (const char of cmd) {
             currentInput += char;
-            await sleep(typingSpeed + Math.random() * 20);
+            await sleep(speed + Math.random() * 20);
         }
     }
 
@@ -139,8 +155,35 @@
     }
 
     function handleKeydown(e: KeyboardEvent) {
+        // Ctrl+L to clear
+        if (e.ctrlKey && e.key === "l") {
+            e.preventDefault();
+            history = [];
+            return;
+        }
+
+        // Ctrl+C to cancel
+        if (e.ctrlKey && e.key === "c") {
+            e.preventDefault();
+            const currentPath = shell.currentPath.join("/");
+            const promptLabel = promptStr || `${user}@host ${currentPath} $`;
+            addToHistory({
+                type: "command",
+                content: currentInput + "^C",
+                promptLabel,
+            });
+            currentInput = "";
+            return;
+        }
+
         if (e.key === "Enter") {
             handleEnter();
+        } else if (e.key === "Tab") {
+            e.preventDefault();
+            const result = shell.autocomplete(currentInput);
+            if (result && result !== currentInput) {
+                currentInput = result;
+            }
         } else if (e.key === "ArrowUp") {
             e.preventDefault();
             if (inputHistory.length === 0) return;
@@ -170,8 +213,8 @@
     }
 </script>
 
-<!-- 
-  Uses vanilla CSS classes instead of Tailwind to ensure zero-dependency 
+<!--
+  Uses vanilla CSS classes instead of Tailwind to ensure zero-dependency
   compatibility across all projects.
 -->
 <div
@@ -183,7 +226,7 @@
     {...$$restProps}
     class="svelte-bash-terminal custom-scrollbar {clazz}"
     style="
-        background-color: {activeTheme.background}; 
+        background-color: {activeTheme.background};
         color: {activeTheme.foreground};
         border-color: {activeTheme.prompt}33;
         {$$restProps.style || ''}
@@ -233,7 +276,6 @@
                 style="color: {activeTheme.cursor}; caret-color: {activeTheme.cursor};"
                 spellcheck="false"
                 autocomplete="off"
-                autofocus
             />
         </div>
     {:else}
@@ -258,8 +300,6 @@
     .svelte-bash-terminal {
         width: 100%;
         height: 100%;
-        min-height: 300px;
-        max-height: 500px;
         overflow-y: auto;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
             "Liberation Mono", "Courier New", monospace;

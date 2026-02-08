@@ -78,7 +78,7 @@ export interface TerminalProps {
     /** Virtual file system structure. */
     structure?: FileStructure;
 
-    /** 
+    /**
      * Theme object or name of a preset ('dark', 'light', 'dracula', 'matrix').
      * @default 'dark'
      */
@@ -90,9 +90,9 @@ export interface TerminalProps {
     /** Username for the prompt. @default 'user' */
     user?: string;
 
-    /** 
-     * Static override for the entire prompt string. 
-     * If provided, `user` and dynamic path are ignored. 
+    /**
+     * Static override for the entire prompt string.
+     * If provided, `user` and dynamic path are ignored.
      */
     promptStr?: string;
 
@@ -100,7 +100,12 @@ export interface TerminalProps {
      * Autoplay script for "Show Mode".
      * If provided, the terminal becomes read-only and plays this script.
      */
-    autoplay?: { command: string; output?: string | string[] | Component }[];
+    autoplay?: {
+        command: string;
+        output?: string | string[] | Component;
+        typingSpeed?: number;
+        delayAfter?: number;
+    }[];
 
     /**
      * Whether to loop the autoplay script.

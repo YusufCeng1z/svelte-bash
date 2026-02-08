@@ -21,7 +21,7 @@
     };
 
     const codeExample = `<div style="height: 400px">
-  <Terminal 
+  <Terminal
      structure={myFiles}
      commands={myCommands}
      welcomeMessage="Welcome!"
@@ -108,7 +108,7 @@
                     >
                     <span
                         class="text-[10px] text-slate-500 font-medium tracking-wide"
-                        >v1.0.0</span
+                        >v1.1.0</span
                     >
                 </div>
             </div>
@@ -170,7 +170,7 @@
                                 class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"
                             ></span>
                         </span>
-                        <span class="tracking-wide">v1.0.0 released</span>
+                        <span class="tracking-wide">v1.1.0 released</span>
                         <svg
                             class="w-3 h-3 text-slate-400 group-hover:translate-x-0.5 transition-transform"
                             fill="none"
@@ -275,10 +275,11 @@
                             structure={myFiles}
                             commands={myCommands}
                             welcomeMessage={[
-                                "Welcome to Svelte Bash v1.0.0",
+                                "Welcome to Svelte Bash v1.1.0",
                                 "---------------------------------",
-                                "This is currently running in an interactive demo container.",
-                                "Type 'help' to see available commands.",
+                                "Now with Filesystem Mutation!",
+                                "Try: mkdir test, touch file.txt, alias ll='ls -la'",
+                                "Type 'help' to see all available commands.",
                             ]}
                             user="guest"
                             class="h-full pb-8"
@@ -367,9 +368,9 @@
   {`}`};
 &lt;/script&gt;
 
-&lt;Terminal 
-    structure={`{`}<span class="text-yellow-400">files</span>{`}`} 
-    user="alice" 
+&lt;Terminal
+    structure={`{`}<span class="text-yellow-400">files</span>{`}`}
+    user="alice"
     style="height: 300px"
 /&gt;</code
                             ></pre>
@@ -434,9 +435,9 @@
   {`}`}
 {`}`};
 
-&lt;Terminal 
-   commands={`{`}<span class="text-green-400">cmds</span>{`}`} 
-   style="height: 300px" 
+&lt;Terminal
+   commands={`{`}<span class="text-green-400">cmds</span>{`}`}
+   style="height: 300px"
 /&gt;</code
                                     ></pre>
                             </div>
@@ -446,7 +447,7 @@
                         >
                             <Terminal
                                 commands={{
-                                    greet: (args) =>
+                                    greet: (args: string[]) =>
                                         `Hello ${args[0] || "Friend"}!`,
                                     time: () => new Date().toLocaleTimeString(),
                                 }}
@@ -488,12 +489,12 @@
                             >
                                 <pre
                                     class="font-mono text-blue-100 overflow-x-auto"><code
-                                        >&lt;Terminal 
+                                        >&lt;Terminal
   <span class="text-purple-400">autoplay</span>={`{[`}
     {`{`} command: 'git status' {`}`},
-    {`{`} 
-      command: 'git commit -m "wip"', 
-      output: '...' 
+    {`{`}
+      command: 'git commit -m "wip"',
+      output: '...'
     {`}`}
   {`]}`}
   style="height: 300px"
@@ -521,7 +522,7 @@
                             >
                                 <pre
                                     class="font-mono text-blue-100 overflow-x-auto"><code
-                                        >&lt;Terminal 
+                                        >&lt;Terminal
   <span class="text-purple-400">theme</span>={`{{`}
     background: '#282a36',
     prompt: '#ff79c6',
@@ -545,6 +546,108 @@
                                 welcomeMessage="Custom Dracula Variant"
                                 style="height: 250px; width: 100%;"
                             />
+                        </div>
+                    </div>
+
+                    <!-- Feature D: Filesystem Mutation (New) -->
+                    <div
+                        class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center"
+                    >
+                        <div class="space-y-4 order-2">
+                            <h3 class="text-xl font-bold text-slate-900">
+                                Filesystem Management
+                            </h3>
+                            <p class="text-slate-600">
+                                The terminal is no longer read-only. Create
+                                directories, files, copy, move, and remove them.
+                                Use <code>on:change</code> to persist changes.
+                            </p>
+                            <div
+                                class="rounded-lg bg-[#09090b] border border-slate-800 shadow-lg p-5 text-xs"
+                            >
+                                <pre
+                                    class="font-mono text-blue-100 overflow-x-auto"><code
+                                        >&lt;Terminal
+    <span class="text-purple-400">on:change</span>={`{`}(e) =&gt; {`{`}
+        // Save new structure to localStorage
+        localStorage.setItem('fs', JSON.stringify(e.detail));
+    {`}`}{`}`}
+/&gt;</code
+                                    ></pre>
+                            </div>
+                        </div>
+                        <div
+                            class="order-1 rounded-xl overflow-hidden shadow-lg ring-1 ring-slate-900/10"
+                        >
+                            <Terminal
+                                theme="light"
+                                welcomeMessage={[
+                                    "Try creating a file:",
+                                    "$ mkdir projects",
+                                    "$ touch projects/idea.txt",
+                                    "$ ls projects",
+                                ]}
+                                autoplay={[
+                                    { command: "mkdir projects" },
+                                    { command: "touch projects/idea.txt" },
+                                    {
+                                        command: "ls projects",
+                                        output: "idea.txt",
+                                    },
+                                ]}
+                                style="height: 250px; width: 100%;"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Feature E: Aliases & Customization (New) -->
+                    <div
+                        class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center"
+                    >
+                        <div
+                            class="order-2 lg:order-1 rounded-xl overflow-hidden shadow-lg ring-1 ring-slate-900/10"
+                        >
+                            <Terminal
+                                theme="dark"
+                                welcomeMessage={[
+                                    "Custom aliases in action:",
+                                    "Type 'll' to run 'ls -la'",
+                                ]}
+                                commands={{
+                                    ll: () => "alias ll='ls -la'",
+                                }}
+                                autoplay={[
+                                    { command: "alias ll='ls -la'" },
+                                    {
+                                        command: "ll",
+                                        output: "total 4\n-rw-r--r-- 1 user 0 date file.txt",
+                                    },
+                                ]}
+                                style="height: 250px; width: 100%;"
+                            />
+                        </div>
+                        <div class="space-y-4 order-1 lg:order-2">
+                            <h3 class="text-xl font-bold text-slate-900">
+                                Aliases
+                            </h3>
+                            <p class="text-slate-600">
+                                Create shortcuts for complex commands using <code
+                                    >alias</code
+                                >.
+                            </p>
+                            <div
+                                class="rounded-lg bg-[#09090b] border border-slate-800 shadow-lg p-5 text-xs"
+                            >
+                                <pre
+                                    class="font-mono text-blue-100 overflow-x-auto"><code
+                                        >&lt;Terminal
+    <span class="text-purple-400">commands</span>={`{`}{`{`}
+        // Define initial alias
+        ll: () => "alias ll='ls -la'"
+    {`}`}{`}`}
+/&gt;</code
+                                    ></pre>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -631,6 +734,39 @@
                                 <td class="py-4 font-mono text-xs">string</td>
                                 <td class="py-4 font-mono text-xs">'user'</td>
                                 <td class="py-4">Username shown in prompt.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3 class="text-xl font-bold text-slate-900 mt-12 mb-6">
+                        Events
+                    </h3>
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200">
+                                <th class="py-4 font-semibold text-slate-900"
+                                    >Event</th
+                                >
+                                <th class="py-4 font-semibold text-slate-900"
+                                    >Detail</th
+                                >
+                                <th class="py-4 font-semibold text-slate-900"
+                                    >Description</th
+                                >
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-600">
+                            <tr class="border-b border-slate-100">
+                                <td class="py-4 font-mono text-purple-600"
+                                    >change</td
+                                >
+                                <td class="py-4 font-mono text-xs"
+                                    >FileStructure</td
+                                >
+                                <td class="py-4"
+                                    >Fired when the filesystem is mutated
+                                    (mkdir, rm, etc).</td
+                                >
                             </tr>
                         </tbody>
                     </table>

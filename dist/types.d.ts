@@ -65,6 +65,8 @@ export interface TerminalProps {
     autoplay?: {
         command: string;
         output?: string | string[] | Component;
+        typingSpeed?: number;
+        delayAfter?: number;
     }[];
     /**
      * Whether to loop the autoplay script.

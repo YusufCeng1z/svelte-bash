@@ -11,8 +11,8 @@
   </p>
 
   <p>
-    <a href="https://svelte-bash.netlify.app/"><strong>Live Demo</strong></a> · 
-    <a href="https://www.npmjs.com/package/svelte-bash"><strong>NPM</strong></a> · 
+    <a href="https://svelte-bash.netlify.app/"><strong>Live Demo</strong></a> ·
+    <a href="https://www.npmjs.com/package/svelte-bash"><strong>NPM</strong></a> ·
     <a href="https://github.com/YusufCeng1z/svelte-bash"><strong>GitHub</strong></a>
   </p>
 
@@ -36,9 +36,12 @@ Whether you are building a developer portfolio, a documentation site, or a web-b
 ## Key Features
 
 *   **Lightweight & Fast**: Zero external dependencies, ~4kb gzipped.
-*   **Virtual File System**: fully functional `ls`, `cd`, `cat`, and `pwd` commands.
+*   **Filesystem Mutation (v1.1)**: Create, move, copy, and delete files/folders (`mkdir`, `touch`, `rm`, `cp`, `mv`).
+*   **Persistent Changes**: Use the `on:change` event to save filesystem state to `localStorage`.
+*   **Aliases (v1.1)**: Create custom command shortcuts (e.g. `alias ll='ls -la'`).
+*   **Virtual File System**: fully functional `ls -la`, `cd`, `cat`, and `pwd` commands.
 *   **Deep Theming**: Includes `dracula`, `matrix`, and `dark` presets, plus full CSS control.
-*   **Autoplay Mode**: Script commands to run automatically—perfect for landing page demos.
+*   **Autoplay Mode**: Script commands to run automatically with granular speed control.
 *   **Accessible**: Proper focus management and keyboard history navigation (Up/Down arrows).
 *   **TypeScript**: Written in TypeScript for excellent type safety and autocomplete.
 
@@ -66,16 +69,38 @@ Import the component and pass a `structure` object to define the virtual file sy
   };
 </script>
 
-<Terminal 
-    structure={fileSystem} 
+<Terminal
+    structure={fileSystem}
     user="guest"
     style="height: 300px"
 />
 ```
 
-### Custom Commands
+### Filesystem Management (v1.1)
 
-You can extend the terminal with your own commands by passing a `commands` object.
+The terminal now supports file mutation. You can listen to changes to persist them.
+
+```svelte
+<script>
+    import { Terminal } from 'svelte-bash';
+
+    // ... load initial state from localStorage ...
+
+    function handleFsChange(event) {
+        // event.detail contains the new FileStructure
+        localStorage.setItem('fs', JSON.stringify(event.detail));
+    }
+</script>
+
+<Terminal
+    structure={initialState}
+    on:change={handleFsChange}
+/>
+```
+
+### Custom Commands & Aliases
+
+You can extend the terminal with your own commands or presets.
 
 ```svelte
 <script>
@@ -84,15 +109,12 @@ You can extend the terminal with your own commands by passing a `commands` objec
   const myCommands = {
     // Return a string
     hello: () => "Hello form svelte-bash!",
-    
+
     // Accept arguments
     echo: (args) => args.join(' '),
-    
-    // Async support
-    fetchdata: async () => {
-        const res = await fetch('https://api.example.com/data');
-        return await res.text();
-    }
+
+    // Define an alias programmatically
+    ll: () => "alias ll='ls -la'"
   };
 </script>
 
@@ -104,11 +126,13 @@ You can extend the terminal with your own commands by passing a `commands` objec
 Perfect for documentation or presentations. The terminal will automatically type and execute the provided sequence.
 
 ```svelte
-<Terminal 
+<Terminal
   autoplay={[
-    { command: "npm install svelte-bash" },
-    { command: "echo 'Installation complete!'", output: "Done." }
+    { command: "mkdir project" },
+    { command: "touch project/index.js", delayAfter: 500 },
+    { command: "ls -la" }
   ]}
+  typingSpeed={80}
 />
 ```
 
@@ -125,7 +149,7 @@ Svelte Bash allows comprehensive styling customization.
 **Custom Theme Object:**
 
 ```svelte
-<Terminal 
+<Terminal
   theme={{
     background: '#1a1b26',
     foreground: '#a9b1d6',
@@ -146,7 +170,14 @@ Svelte Bash allows comprehensive styling customization.
 | `machine` | `string` | `'machine'` | The machine name displayed in the prompt. |
 | `welcomeMessage` | `string` \| `string[]` | `[]` | Message shown on initialization. |
 | `autoplay` | `AutoplayItem[]` | `undefined` | Array of commands to execute automatically. |
+| `typingSpeed` | `number` | `50` | Default typing speed for autoplay (ms). |
 | `readonly` | `boolean` | `false` | If true, user input is disabled. |
+
+### Events
+
+| Event | Detail | Description |
+|-------|--------|-------------|
+| `change` | `FileStructure` | Fired when the filesystem is modified (mkdir, rm, etc). |
 
 ## Contributing
 

@@ -1,3 +1,4 @@
+import { Shell } from "./shell";
 interface $$__sveltets_2_IsomorphicComponent<Props extends Record<string, any> = any, Events extends Record<string, any> = any, Slots extends Record<string, any> = any, Exports = {}, Bindings = string> {
     new (options: import('svelte').ComponentConstructorOptions<Props>): import('svelte').SvelteComponent<Props, Events, Slots> & {
         $$bindings?: Bindings;
@@ -22,12 +23,19 @@ declare const Terminal: $$__sveltets_2_IsomorphicComponent<{
     autoplay?: {
         command: string;
         output?: string | string[] | import("svelte").Component;
+        typingSpeed?: number;
+        delayAfter?: number;
     }[] | undefined;
     autoplayLoop?: boolean | undefined;
     typingSpeed?: number | undefined;
     class?: string | undefined;
+    getShell?: (() => Shell) | undefined;
 }, {
+    change: CustomEvent<any>;
+} & {
     [evt: string]: CustomEvent<any>;
-}, {}, {}, string>;
+}, {}, {
+    getShell: () => Shell;
+}, string>;
 type Terminal = InstanceType<typeof Terminal>;
 export default Terminal;
