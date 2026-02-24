@@ -41,7 +41,7 @@ Whether you are building a developer portfolio, a documentation site, or a web-b
 *   **Persistent State (v1.2)**: Built-in `persist` prop to automatically save/load state to `localStorage`.
 *   **Advanced I/O (v1.2)**: Redirect command outputs to files using `>` and `>>`.
 *   **Nano Text Editor (v1.2)**: Built-in GNU nano clone overlay (`nano <file>`) to edit files directly.
-*   **Autoplay & Bootplay (v1.2)**: Script commands to run automatically, or stream fast non-interactive outputs (like boot logs).
+*   **Autoplay & Bootplay (v1.2)**: Script commands to run automatically, or stream fast non-interactive outputs (like boot logs). *(Bootplay credit: [@daemy](https://github.com/daemy))*
 *   **ZSH Syntax Highlighting (v1.2)**: Live tokenization colors for commands, strings, and flags.
 *   **Ghost Completion & Typewriter (v1.2)**: Premium visual interactions for a high-end CLI feel.
 *   **Aliases**: Create custom command shortcuts (e.g. `alias ll='ls -la'`).
