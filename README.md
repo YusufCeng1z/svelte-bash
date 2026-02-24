@@ -36,12 +36,16 @@ Whether you are building a developer portfolio, a documentation site, or a web-b
 ## Key Features
 
 *   **Lightweight & Fast**: Zero external dependencies, ~4kb gzipped.
-*   **Filesystem Mutation (v1.1)**: Create, move, copy, and delete files/folders (`mkdir`, `touch`, `rm`, `cp`, `mv`).
-*   **Persistent Changes**: Use the `on:change` event to save filesystem state to `localStorage`.
-*   **Aliases (v1.1)**: Create custom command shortcuts (e.g. `alias ll='ls -la'`).
-*   **Virtual File System**: fully functional `ls -la`, `cd`, `cat`, and `pwd` commands.
-*   **Deep Theming**: Includes `dracula`, `matrix`, and `dark` presets, plus full CSS control.
-*   **Autoplay Mode**: Script commands to run automatically with granular speed control.
+*   **Virtual File System**: Fully functional `ls -la`, `cd`, `cat`, and `pwd` commands.
+*   **Filesystem Mutation**: Create, move, copy, and delete files/folders (`mkdir`, `touch`, `rm`, `cp`, `mv`).
+*   **Persistent State (v1.2)**: Built-in `persist` prop to automatically save/load state to `localStorage`.
+*   **Advanced I/O (v1.2)**: Redirect command outputs to files using `>` and `>>`.
+*   **Nano Text Editor (v1.2)**: Built-in GNU nano clone overlay (`nano <file>`) to edit files directly.
+*   **Autoplay & Bootplay (v1.2)**: Script commands to run automatically, or stream fast non-interactive outputs (like boot logs).
+*   **ZSH Syntax Highlighting (v1.2)**: Live tokenization colors for commands, strings, and flags.
+*   **Ghost Completion & Typewriter (v1.2)**: Premium visual interactions for a high-end CLI feel.
+*   **Aliases**: Create custom command shortcuts (e.g. `alias ll='ls -la'`).
+*   **Deep Theming**: Includes `dracula`, `matrix`, `dark`, and `light` presets, plus full CSS control.
 *   **Accessible**: Proper focus management and keyboard history navigation (Up/Down arrows).
 *   **TypeScript**: Written in TypeScript for excellent type safety and autocomplete.
 
@@ -76,19 +80,26 @@ Import the component and pass a `structure` object to define the virtual file sy
 />
 ```
 
-### Filesystem Management (v1.1)
+### Filesystem Persistence (v1.2.0)
 
-The terminal now supports file mutation. You can listen to changes to persist them.
+For simple apps, simply pass a string to the `persist` prop and the terminal will autosave the filesystem state to `localStorage` under that storage key:
+
+```svelte
+<Terminal
+    structure={initialState}
+    persist="my-local-storage-key"
+/>
+```
+
+If you need programmatic control, you can still listen to `on:change`:
 
 ```svelte
 <script>
     import { Terminal } from 'svelte-bash';
 
-    // ... load initial state from localStorage ...
-
     function handleFsChange(event) {
         // event.detail contains the new FileStructure
-        localStorage.setItem('fs', JSON.stringify(event.detail));
+        console.log("Filesystem changed:", event.detail);
     }
 </script>
 
@@ -97,6 +108,16 @@ The terminal now supports file mutation. You can listen to changes to persist th
     on:change={handleFsChange}
 />
 ```
+
+### Advanced I/O and Text Editor (v1.2.0)
+
+Svelte Bash now supports basic stream redirection (`>` and `>>`) out of the box. You can write the output of any command directly to a file:
+```bash
+$ ls -la > output.txt
+$ cat output.txt
+```
+
+Need to edit files? Just type `nano <filename>` and you'll get a fully functional, zero-dependency GNU Nano GUI embedded right in the terminal space, allowing direct modifications to strings inside the virtual filesystem!
 
 ### Custom Commands & Aliases
 
@@ -119,6 +140,26 @@ You can extend the terminal with your own commands or presets.
 </script>
 
 <Terminal commands={myCommands} />
+```
+
+### Premium Visuals & Effects (v1.2.0)
+
+**Typewriter Welcome Messages:**
+Instead of printing immediately, welcome messages can be animated character-by-character.
+```svelte
+<Terminal
+    welcomeMessage={["Wake up, Neo..."]}
+    typewriter={true} <!-- or {30} for typing speed -->
+/>
+```
+
+**ZSH-Style Syntax Highlighting & Ghost Completion:**
+Give your terminal that beloved Oh-My-Zsh feel. `syntaxHighlight` parses inputs to color valid commands green, invalid ones red, strings yellow, and flags blue. `ghostCompletion` predicts your next move.
+```svelte
+<Terminal
+    syntaxHighlight={true}
+    ghostCompletion={true}
+/>
 ```
 
 ### Autoplay (Show Mode)
@@ -167,11 +208,16 @@ Svelte Bash allows comprehensive styling customization.
 | `commands` | `Record<string, Function>` | `{}` | Custom command handlers. |
 | `theme` | `string` \| `Theme` | `'dark'` | Theme preset name or specific color object. |
 | `user` | `string` | `'user'` | The username displayed in the prompt. |
-| `machine` | `string` | `'machine'` | The machine name displayed in the prompt. |
+| `promptStr` | `string` | `undefined` | Static override for the entire prompt. |
 | `welcomeMessage` | `string` \| `string[]` | `[]` | Message shown on initialization. |
+| `typewriter` | `boolean` \| `number` | `false` | Animate the welcome message character-by-character. |
+| `syntaxHighlight`| `boolean` | `false` | Enable interactive ZSH-style tokenization. |
+| `ghostCompletion`| `boolean` | `false` | Faint overlay predicting internal/external commands. |
+| `persist` | `boolean` \| `string` | `undefined` | Key to sync the filesystem structurally with `localStorage`. |
 | `autoplay` | `AutoplayItem[]` | `undefined` | Array of commands to execute automatically. |
+| `bootplay` | `BootplayItem[]` | `undefined` | Fast, non-interactive initialization logs. |
 | `typingSpeed` | `number` | `50` | Default typing speed for autoplay (ms). |
-| `readonly` | `boolean` | `false` | If true, user input is disabled. |
+| `bootSpeed` | `number` | `10` | Default stream interval for bootplay logs (ms). |
 
 ### Events
 

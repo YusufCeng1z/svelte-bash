@@ -1,3 +1,9 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #09090b; /* Zinc 950 */
+    color: #e4e4e7; /* Zinc 200 */
+}

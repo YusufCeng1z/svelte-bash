@@ -13,14 +13,27 @@
     export let autoplay: TerminalProps["autoplay"] = undefined;
     export let autoplayLoop: boolean = true;
     export let typingSpeed: number = 50;
+    export let bootplay: TerminalProps["bootplay"] = undefined;
+    export let bootSpeed: number = 10;
+    export let persist: TerminalProps["persist"] = undefined;
 
     // Style Props
     let clazz: string = "";
     export { clazz as class };
+    export let style: string = "";
+    export let typewriter: boolean | number = false;
+
+    /**
+     * Enables Ghost Auto-Completion for built-in and custom commands.
+     * Generates a faint overlay suggesting the rest of the command.
+     * @default false
+     */
+    export let ghostCompletion: boolean = false;
 
     // Internal State
     let history: TerminalLine[] = [];
     let currentInput = "";
+    let isBooting = false;
 
     // Event Dispatcher
     import { createEventDispatcher } from "svelte";
@@ -30,6 +43,94 @@
     let inputHistory: string[] = [];
     let historyIndex = -1;
     let tempInput = "";
+    let currentPathStr = "~";
+
+    // Nano state
+    let isNanoOpen = false;
+    let nanoContent = "";
+    let nanoFile = "";
+    let nanoTargetParent: any = null;
+    let nanoTargetName = "";
+    let nanoTextarea: HTMLTextAreaElement;
+
+    // Feature States
+    const builtIns = [
+        "clear",
+        "ls",
+        "cat",
+        "cd",
+        "pwd",
+        "echo",
+        "help",
+        "history",
+        "mkdir",
+        "touch",
+        "rm",
+        "alias",
+    ];
+    $: suggestion =
+        ghostCompletion && currentInput && currentInput.indexOf(" ") === -1
+            ? Object.keys(commands || {})
+                  .concat(builtIns)
+                  .find((c) => c.startsWith(currentInput))
+            : "";
+    $: ghostSuffix =
+        suggestion && suggestion.startsWith(currentInput)
+            ? suggestion.slice(currentInput.length)
+            : "";
+
+    // Syntax Highlighting
+    export let syntaxHighlight: boolean = false;
+
+    $: highlightedHtml = computeHighlighting(
+        currentInput,
+        syntaxHighlight,
+        commands,
+        builtIns,
+        activeTheme,
+    );
+
+    function computeHighlighting(
+        input: string,
+        active: boolean,
+        cmds: any,
+        builtInsList: string[],
+        themeObj: any,
+    ) {
+        if (!active || !input) return input;
+
+        // Simple Tokenizer
+        const tokens = input.match(/(".*?"|'.*?'|\S+|\s+)/g) || [];
+        let html = "";
+        let isFirstWord = true;
+
+        for (const token of tokens) {
+            if (/^\s+$/.test(token)) {
+                html += token; // Preserve spaces
+                continue;
+            }
+
+            const escapedToken = token
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+
+            if (isFirstWord) {
+                const isValid =
+                    builtInsList.includes(token) || (cmds && cmds[token]);
+                const color = isValid ? "#4ade80" : "#ef4444"; // Green or Red
+                html += `<span style="color: ${color}">${escapedToken}</span>`;
+                isFirstWord = false;
+            } else if (token.startsWith("-")) {
+                html += `<span style="color: #38bdf8">${escapedToken}</span>`; // Sky color for flags
+            } else if (token.startsWith('"') || token.startsWith("'")) {
+                html += `<span style="color: #facc15">${escapedToken}</span>`; // Yellow color for strings
+            } else {
+                html += `<span style="color: ${themeObj.foreground}">${escapedToken}</span>`;
+            }
+        }
+        return html;
+    }
 
     // Theme resolution
     const defaultTheme = {
@@ -61,19 +162,94 @@
 
     // Initialize
     onMount(() => {
-        if (welcomeMessage) {
-            addToHistory({ type: "output", content: welcomeMessage });
+        // Handle Persistence (Load)
+        if (persist && typeof window !== "undefined") {
+            const key =
+                typeof persist === "string" ? persist : "svelte-bash-fs";
+            const saved = localStorage.getItem(key);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    // Merge saved structure with props structure
+                    shell.setStructure({ ...structure, ...parsed });
+                } catch (e) {
+                    console.error(
+                        "svelte-bash: Failed to parse persisted filesystem state.",
+                        e,
+                    );
+                }
+            }
         }
 
         // Listen for shell changes
         shell.on("change", (newStructure: any) => {
+            // Handle Persistence (Save)
+            if (persist && typeof window !== "undefined") {
+                const key =
+                    typeof persist === "string" ? persist : "svelte-bash-fs";
+                localStorage.setItem(key, JSON.stringify(newStructure));
+            }
             dispatch("change", newStructure);
         });
 
+        if (welcomeMessage) {
+            if (typewriter) {
+                const speed = typeof typewriter === "number" ? typewriter : 20;
+                playTypewriter(welcomeMessage, speed).then(() => {
+                    checkBootAndAutoPlay();
+                });
+            } else {
+                addToHistory({ type: "output", content: welcomeMessage });
+                checkBootAndAutoPlay();
+            }
+        } else {
+            checkBootAndAutoPlay();
+        }
+    });
+
+    function checkBootAndAutoPlay() {
+        if (bootplay && bootplay.length > 0) {
+            runBootplay();
+        } else if (autoplay && autoplay.length > 0) {
+            runAutoplay();
+        }
+    }
+
+    async function playTypewriter(text: string | string[], speed: number) {
+        const lines = Array.isArray(text) ? text : [text];
+        for (const line of lines) {
+            if (typeof line !== "string") {
+                addToHistory({ type: "output", content: line });
+                continue;
+            }
+            const id = Date.now() + Math.random();
+            history = [...history, { type: "output", content: "", id }];
+
+            for (let i = 0; i < line.length; i++) {
+                const idx = history.findIndex((h) => h.id === id);
+                if (idx !== -1) {
+                    history[idx].content += line[i];
+                    await sleep(speed);
+                    scrollToBottom();
+                }
+            }
+            await sleep(150);
+        }
+    }
+
+    async function runBootplay() {
+        isBooting = true;
+        for (const item of bootplay!) {
+            await sleep(item.delay ?? bootSpeed);
+            addToHistory({ type: "output", content: item.output });
+        }
+        isBooting = false;
+
+        // If autoplay is also defined, start it after bootplay
         if (autoplay && autoplay.length > 0) {
             runAutoplay();
         }
-    });
+    }
 
     async function runAutoplay() {
         while (true) {
@@ -119,6 +295,19 @@
         if (container) container.scrollTop = container.scrollHeight;
     }
 
+    function handleNanoKeydown(e: KeyboardEvent) {
+        if (e.ctrlKey && e.key === "x") {
+            e.preventDefault();
+            shell.updateNode(nanoTargetParent, nanoTargetName, nanoContent);
+            isNanoOpen = false;
+            setTimeout(() => inputElement?.focus(), 10);
+        } else if (e.ctrlKey && e.key === "c") {
+            e.preventDefault();
+            isNanoOpen = false;
+            setTimeout(() => inputElement?.focus(), 10);
+        }
+    }
+
     async function handleEnter() {
         const raw = currentInput;
         currentInput = "";
@@ -128,8 +317,7 @@
         tempInput = "";
 
         // 1. Snapshot Prompt & Add Command
-        const currentPath = shell.currentPath.join("/");
-        const promptLabel = promptStr || `${user}@host ${currentPath} $`;
+        const promptLabel = promptStr || `${user}@host ${currentPathStr} $`;
 
         addToHistory({ type: "command", content: raw, promptLabel });
 
@@ -144,14 +332,30 @@
         // 3. Handle Results
         for (const line of results) {
             if (
+                line.type === ("system" as any) &&
+                line.content?.action === "nano_open"
+            ) {
+                nanoFile = line.content.target;
+                nanoContent = line.content.value || "";
+                nanoTargetParent = line.content.parentObj;
+                nanoTargetName = line.content.nodeName;
+                isNanoOpen = true;
+                setTimeout(() => nanoTextarea?.focus(), 50);
+                continue;
+            }
+
+            if (
                 line.type === ("command" as any) &&
                 line.content === "CLEAR_SIGNAL"
             ) {
                 history = [];
+                currentPathStr = shell.currentPath.join("/");
                 return;
             }
             addToHistory(line);
         }
+
+        currentPathStr = shell.currentPath.join("/");
     }
 
     function handleKeydown(e: KeyboardEvent) {
@@ -180,9 +384,13 @@
             handleEnter();
         } else if (e.key === "Tab") {
             e.preventDefault();
-            const result = shell.autocomplete(currentInput);
-            if (result && result !== currentInput) {
-                currentInput = result;
+            if (ghostSuffix) {
+                currentInput += ghostSuffix;
+            } else {
+                const result = shell.autocomplete(currentInput);
+                if (result && result !== currentInput) {
+                    currentInput = result;
+                }
             }
         } else if (e.key === "ArrowUp") {
             e.preventDefault();
@@ -217,80 +425,129 @@
   Uses vanilla CSS classes instead of Tailwind to ensure zero-dependency
   compatibility across all projects.
 -->
+<!-- Auto-focus whenever clicked inside the terminal -->
+<!-- svelte-ignore a11y-click-events-have-key-events -->
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
-    bind:this={container}
-    on:click={() => inputElement?.focus()}
-    role="button"
-    tabindex="0"
-    on:keydown={() => {}}
-    {...$$restProps}
-    class="svelte-bash-terminal custom-scrollbar {clazz}"
-    style="
-        background-color: {activeTheme.background};
-        color: {activeTheme.foreground};
-        border-color: {activeTheme.prompt}33;
-        {$$restProps.style || ''}
-    "
+    class="svelte-bash-terminal custom-scrollbar relative {clazz}"
+    style="background-color: {activeTheme.background}; color: {activeTheme.foreground}; {style}"
+    on:click={() => {
+        if (!isNanoOpen) inputElement?.focus();
+    }}
 >
-    <!-- HISTORY rendering -->
-    {#each history as line (line.id)}
-        <div class="line">
-            {#if line.type === "command"}
-                <span class="prompt-label" style="color: {activeTheme.prompt};">
-                    {line.promptLabel || "$"}
-                </span>
-                <span>{line.content}</span>
-            {:else if line.type === "error"}
-                <span class="error">{line.content}</span>
-            {:else}
-                <!-- Output -->
-                {#if typeof line.content === "string"}
-                    <div class="output">
-                        {line.content}
-                    </div>
-                {:else if Array.isArray(line.content)}
-                    {#each line.content as item}
-                        <div class="output">{item}</div>
-                    {/each}
+    <div bind:this={container} class="h-full overflow-y-auto pb-8">
+        {#each history as line (line.id)}
+            <div class="line">
+                {#if line.type === "command"}
+                    <span
+                        class="prompt-label"
+                        style="color: {activeTheme.prompt};"
+                    >
+                        {line.promptLabel || "$"}
+                    </span>
+                    <span>{line.content}</span>
+                {:else if line.type === "error"}
+                    <span class="error">{line.content}</span>
                 {:else}
-                    <svelte:component this={line.content} />
+                    <!-- Output -->
+                    {#if typeof line.content === "string"}
+                        <div class="output">
+                            {line.content}
+                        </div>
+                    {:else if Array.isArray(line.content)}
+                        {#each line.content as item}
+                            <div class="output">{item}</div>
+                        {/each}
+                    {:else}
+                        <svelte:component this={line.content} />
+                    {/if}
                 {/if}
-            {/if}
-        </div>
-    {/each}
+            </div>
+        {/each}
 
-    <!-- ACTIVE INPUT LINE -->
-    {#if !autoplay}
-        <div class="input-line">
-            <span
-                class="prompt-label shrink-0"
-                style="color: {activeTheme.prompt};"
+        <!-- ACTIVE INPUT LINE -->
+        {#if !isBooting}
+            {#if !autoplay}
+                <div class="input-line">
+                    <span
+                        class="prompt-label shrink-0"
+                        style="color: {activeTheme.prompt};"
+                    >
+                        {promptStr || `${user}@host ${currentPathStr} $`}
+                    </span>
+                    <div class="relative flex-1 flex items-center w-full">
+                        {#if ghostSuffix}
+                            <div
+                                class="absolute top-0 left-0 pointer-events-none whitespace-pre h-full flex items-center z-0"
+                            >
+                                <span class="opacity-0">{currentInput}</span
+                                ><span
+                                    style="color: {activeTheme.cursor}; opacity: 0.4;"
+                                    >{ghostSuffix}</span
+                                >
+                            </div>
+                        {/if}
+                        {#if syntaxHighlight}
+                            <div
+                                class="absolute top-0 left-0 pointer-events-none whitespace-pre h-full flex items-center z-0"
+                            >
+                                <span>{@html highlightedHtml}</span>
+                            </div>
+                        {/if}
+                        <input
+                            bind:this={inputElement}
+                            bind:value={currentInput}
+                            on:keydown={handleKeydown}
+                            class="terminal-input relative z-10 w-full"
+                            style="color: {syntaxHighlight
+                                ? 'transparent'
+                                : activeTheme.cursor}; caret-color: {activeTheme.cursor}; background: transparent;"
+                            spellcheck="false"
+                            autocomplete="off"
+                        />
+                    </div>
+                </div>
+            {:else}
+                <div class="input-line">
+                    <span
+                        class="prompt-label shrink-0"
+                        style="color: {activeTheme.prompt};"
+                    >
+                        {promptStr || `${user}@host ${currentPathStr} $`}
+                    </span>
+                    <span>{currentInput}</span>
+                    <span
+                        class="cursor-block"
+                        style="background-color: {activeTheme.cursor};"
+                    ></span>
+                </div>
+            {/if}
+        {/if}
+    </div>
+
+    {#if isNanoOpen}
+        <div
+            class="nano-overlay"
+            style="background: {activeTheme.background}; color: {activeTheme.foreground};"
+        >
+            <div
+                class="nano-header"
+                style="background: {activeTheme.prompt}; color: {activeTheme.background};"
             >
-                {promptStr || `${user}@host ${shell.currentPath.join("/")} $`}
-            </span>
-            <input
-                bind:this={inputElement}
-                bind:value={currentInput}
-                on:keydown={handleKeydown}
-                class="terminal-input"
-                style="color: {activeTheme.cursor}; caret-color: {activeTheme.cursor};"
+                GNU nano - {nanoFile}
+            </div>
+            <textarea
+                bind:this={nanoTextarea}
+                bind:value={nanoContent}
+                on:keydown={handleNanoKeydown}
+                class="nano-editor"
                 spellcheck="false"
-                autocomplete="off"
-            />
-        </div>
-    {:else}
-        <div class="input-line">
-            <span
-                class="prompt-label shrink-0"
-                style="color: {activeTheme.prompt};"
-            >
-                {promptStr || `${user}@host ${shell.currentPath.join("/")} $`}
-            </span>
-            <span>{currentInput}</span>
-            <span
-                class="cursor-block"
-                style="background-color: {activeTheme.cursor};"
-            ></span>
+                style="background: {activeTheme.background}; color: {activeTheme.foreground}; caret-color: {activeTheme.prompt};"
+            ></textarea>
+            <div class="nano-footer">
+                <span><span class="nano-shortcut">^X</span> Exit & Save</span>
+                <span><span class="nano-shortcut">^C</span> Cancel</span>
+            </div>
         </div>
     {/if}
 </div>
@@ -402,5 +659,41 @@
     .custom-scrollbar::-webkit-scrollbar-thumb {
         background: rgba(255, 255, 255, 0.2);
         border-radius: 4px;
+    }
+
+    /* Nano Editor */
+    .nano-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 50;
+        display: flex;
+        flex-direction: column;
+    }
+    .nano-header {
+        padding: 4px 8px;
+        text-align: center;
+        font-weight: bold;
+    }
+    .nano-editor {
+        flex: 1;
+        width: 100%;
+        border: none;
+        outline: none;
+        resize: none;
+        padding: 8px;
+        font-family: inherit;
+        font-size: inherit;
+    }
+    .nano-footer {
+        padding: 6px 12px;
+        display: flex;
+        gap: 24px;
+        background: rgba(0, 0, 0, 0.2);
+    }
+    .nano-shortcut {
+        font-weight: bold;
     }
 </style>

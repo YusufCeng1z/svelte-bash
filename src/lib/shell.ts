@@ -51,6 +51,12 @@ export class Shell {
         this.customCommands = c;
     }
 
+    public updateNode(parent: any, name: string, value: string) {
+        if (!parent) return;
+        parent[name] = value;
+        this.emit('change', this.structure);
+    }
+
     /**
      * Resolve a path string to a node and its logical path.
      * Handles:
@@ -137,7 +143,32 @@ export class Shell {
      * Process a command string and return the updated history lines (or void if direct history mutation).
      * Actually, let's return a list of NEW lines provided by the command execution.
      */
-    public async execute(input: string): Promise<TerminalLine[]> {
+    public async execute(rawInput: string): Promise<TerminalLine[]> {
+        let input = rawInput.trim();
+        if (!input) return [];
+
+        let redirectFile = '';
+        let append = false;
+
+        // Parse redirection at the end of the command
+        const appendMatch = input.match(/(.*)>>\s*(\S+)\s*$/);
+        if (appendMatch) {
+            input = appendMatch[1].trim();
+            redirectFile = appendMatch[2];
+            append = true;
+        } else {
+            const writeMatch = input.match(/(.*)>\s*(\S+)\s*$/);
+            if (writeMatch) {
+                input = writeMatch[1].trim();
+                redirectFile = writeMatch[2];
+            }
+        }
+
+        const lines = await this._executeRaw(input);
+        return this.handleRedirection(lines, redirectFile, append);
+    }
+
+    private async _executeRaw(input: string): Promise<TerminalLine[]> {
         const trimmed = input.trim();
         if (!trimmed) return [];
 
@@ -271,6 +302,17 @@ export class Shell {
             return [];
         }
 
+        // Built-in: echo
+        if (cmd === 'echo') {
+            // Strip surrounding quotes if the user typed them: e.g. "Hello World" -> Hello World
+            // the tokenizer usually preserves them if it's not a full shell parser.
+            let content = args.join(' ');
+            if (content.startsWith("'") && content.endsWith("'")) content = content.slice(1, -1);
+            else if (content.startsWith('"') && content.endsWith('"')) content = content.slice(1, -1);
+
+            return [{ type: 'output', content }];
+        }
+
         // 6. Built-in: pwd
         if (cmd === 'pwd') {
             // Convert ['~', 'src', 'lib'] -> '/src/lib'
@@ -281,7 +323,7 @@ export class Shell {
         // 7. Built-in: help
         if (cmd === 'help') {
             const custom = Object.keys(this.customCommands);
-            const content = `Available commands: clear, ls, cat, cd, pwd, help, history, mkdir, touch, rm, alias${custom.length ? ', ' + custom.join(', ') : ''}`;
+            const content = `Available commands: clear, ls, cat, cd, pwd, echo, help, history, mkdir, touch, rm, alias${custom.length ? ', ' + custom.join(', ') : ''}`;
             return [{ type: 'output', content }];
         }
 
@@ -436,8 +478,77 @@ export class Shell {
             return [{ type: 'error', content: "usage: alias name='command'" }];
         }
 
+        // 16. Built-in: nano
+        if (cmd === 'nano') {
+            const target = args[0];
+            if (!target) return [{ type: 'error', content: 'usage: nano <file>' }];
+
+            const { node, parent, name } = this.resolvePath(target);
+            if (node && typeof node === 'object') {
+                return [{ type: 'error', content: `nano: ${target}: Is a directory` }];
+            }
+
+            if (!parent) {
+                return [{ type: 'error', content: `nano: ${target}: No such file or directory` }];
+            }
+
+            let text = typeof node === 'string' ? node : '';
+            return [{
+                type: 'system',
+                content: {
+                    action: 'nano_open',
+                    target: target,
+                    value: text,
+                    nodeName: name,
+                    parentObj: parent
+                }
+            }];
+        }
 
         return [{ type: 'error', content: `Command not found: ${cmd}` }];
+    }
+
+    private handleRedirection(outputLines: TerminalLine[], redirectFile: string, append: boolean): TerminalLine[] {
+        if (!redirectFile || outputLines.length === 0) return outputLines;
+
+        // We only redirect 'output' type lines, not 'error' or 'command' (basic bash behavior)
+        const linesToRedirect = outputLines.filter(l => l.type === 'output');
+        const linesToKeep = outputLines.filter(l => l.type !== 'output');
+
+        if (linesToRedirect.length === 0) return outputLines; // Nothing to redirect
+
+        // Extract string content
+        const textContent = linesToRedirect.map(l => {
+            if (typeof l.content === 'string') return l.content;
+            if (Array.isArray(l.content)) return l.content.join('\n');
+            return ''; // We can't redirect components easily
+        }).join('\n');
+
+        // Resolve target file
+        let { node, parent, name } = this.resolvePath(redirectFile);
+
+        if (node && typeof node === 'object') {
+            return [{ type: 'error', content: `bash: ${redirectFile}: Is a directory` }];
+        }
+
+        if (!parent) {
+            return [{ type: 'error', content: `bash: ${redirectFile}: No such file or directory` }];
+        }
+
+        // Write or append
+        let newContent = textContent;
+        if (append && typeof node === 'string') {
+            newContent = node + (node.endsWith('\n') ? '' : '\n') + textContent;
+        }
+
+        // Ensure ends with newline if we wrote something
+        if (!newContent.endsWith('\n') && newContent.length > 0) newContent += '\n';
+
+        parent[name] = newContent;
+        this.emit('change', this.structure);
+
+        // Return only the lines we didn't redirect (e.g. errors)
+        return linesToKeep;
     }
 
     /**

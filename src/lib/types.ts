@@ -5,8 +5,8 @@ import type { Component } from 'svelte';
  * Represents a single line in the terminal history.
  */
 export interface TerminalLine {
-    type: 'command' | 'output' | 'error';
-    content: string | string[] | Component;
+    type: 'command' | 'output' | 'error' | 'system';
+    content: string | string[] | Component | any;
     id?: number;
     /** Optional snapshot of the prompt at the time this line was created (for commands). */
     promptLabel?: string;
@@ -97,6 +97,26 @@ export interface TerminalProps {
     promptStr?: string;
 
     /**
+     * If true or a number (milliseconds), types the welcome message out character by character.
+     * @default false
+     */
+    typewriter?: boolean | number;
+
+    /**
+     * Enables Ghost Auto-Completion for built-in and custom commands.
+     * Generates a faint overlay suggesting the rest of the command.
+     * @default false
+     */
+    ghostCompletion?: boolean;
+
+    /**
+     * Enables ZSH-style live syntax highlighting.
+     * Valid commands will appear green, invalid ones red, and arguments varied colors.
+     * @default false
+     */
+    syntaxHighlight?: boolean;
+
+    /**
      * Autoplay script for "Show Mode".
      * If provided, the terminal becomes read-only and plays this script.
      */
@@ -106,6 +126,21 @@ export interface TerminalProps {
         typingSpeed?: number;
         delayAfter?: number;
     }[];
+
+    /**
+     * Bootplay script for fast, non-interactive streaming (e.g. system logs).
+     * The terminal is read-only and no commands are typed.
+     */
+    bootplay?: {
+        output: string | string[] | Component;
+        delay?: number;
+    }[];
+
+    /**
+     * Default delay in milliseconds between bootplay outputs.
+     * @default 10
+     */
+    bootSpeed?: number;
 
     /**
      * Whether to loop the autoplay script.
@@ -120,7 +155,19 @@ export interface TerminalProps {
     typingSpeed?: number;
 
     /**
+     * If defined, saves and loads the filesystem state to localStorage automatically.
+     * If `true`, uses key 'svelte-bash-fs'. If a string, uses that string as the key.
+     * @default undefined
+     */
+    persist?: boolean | string;
+
+    /**
      * Additional CSS classes for the terminal container.
      */
     class?: string;
+
+    /**
+     * Custom inline styles for the terminal container.
+     */
+    style?: string;
 }
