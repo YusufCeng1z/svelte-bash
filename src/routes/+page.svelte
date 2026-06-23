@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte";
     import { Terminal } from "$lib";
     import type { FileStructure } from "$lib/types";
 
@@ -21,196 +22,134 @@
             "GitHub: github.com/YusufCeng1z\nTwitter: @YusufCeng1z",
     };
 
-    // --- UI Logic ---
-    let copied = false;
-    function copyInstall() {
-        navigator.clipboard.writeText("npm install svelte-bash");
-        copied = true;
-        setTimeout(() => (copied = false), 2000);
-    }
+    onMount(async () => {
+        const { default: gsap } = await import("gsap");
+        const { ScrollTrigger } = await import("gsap/dist/ScrollTrigger.js");
+
+        gsap.registerPlugin(ScrollTrigger);
+
+        const title = document.querySelector(".hero-title");
+        const desc = document.querySelector(".hero-desc");
+        const actions = document.querySelector(".hero-actions");
+
+        gsap.fromTo(
+            [title, desc, actions],
+            { opacity: 0, y: 35, scale: 0.95 },
+            {
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                duration: 2.2,
+                stagger: 0.2,
+                ease: "expo.out",
+                delay: 0.4,
+            },
+        );
+
+        gsap.fromTo(
+            ".terminal-container",
+            { opacity: 0, scale: 0.95, y: 50 },
+            {
+                opacity: 1,
+                scale: 1,
+                y: 0,
+                duration: 1.4,
+                ease: "power3.out",
+                delay: 0.8,
+            }
+        );
+
+        gsap.utils.toArray(".bento-card").forEach((card: any) => {
+            gsap.fromTo(card, 
+                { opacity: 0, y: 30 }, 
+                {
+                    opacity: 1, 
+                    y: 0, 
+                    duration: 1, 
+                    ease: "power2.out",
+                    scrollTrigger: {
+                        trigger: card,
+                        start: "top 85%",
+                    }
+                }
+            );
+        });
+
+        // Hero Parallax Effect
+        gsap.to(".hero-content", {
+            y: 400,
+            scale: 0.9,
+            opacity: -0.5,
+            ease: "none",
+            scrollTrigger: {
+                trigger: ".hero-section",
+                start: "top top",
+                end: "bottom top",
+                scrub: true
+            }
+        });
+    });
 </script>
 
 <svelte:head>
     <title>Svelte Bash - The Terminal Component for Svelte</title>
-    <style>
-        .hero-glow {
-            position: absolute;
-            top: 20%;
-            left: 50%;
-            width: 800px;
-            height: 800px;
-            background: radial-gradient(
-                circle,
-                rgba(99, 102, 241, 0.15) 0%,
-                rgba(168, 85, 247, 0.15) 30%,
-                rgba(0, 0, 0, 0) 70%
-            );
-            transform: translate(-50%, -50%);
-            z-index: 0;
-            pointer-events: none;
-        }
-        .grid-bg {
-            background-size: 40px 40px;
-            background-image: linear-gradient(
-                    to right,
-                    rgba(255, 255, 255, 0.03) 1px,
-                    transparent 1px
-                ),
-                linear-gradient(
-                    to bottom,
-                    rgba(255, 255, 255, 0.03) 1px,
-                    transparent 1px
-                );
-        }
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-        }
-    </style>
 </svelte:head>
 
-<div
-    class="min-h-screen bg-[#09090b] text-zinc-300 font-sans relative overflow-x-hidden grid-bg"
->
-    <div class="hero-glow"></div>
-
-    <!-- NAVBAR -->
-    <nav
-        class="border-b border-white/10 bg-[#09090b]/80 backdrop-blur-md sticky top-0 z-50"
-    >
+<div class="w-full overflow-hidden text-zinc-300 font-sans">
+    
+    <!-- HERO SECTION -->
+    <div class="hero-section relative container mx-auto flex flex-col justify-center items-center text-center min-h-[90vh] pt-32 pb-32 md:pt-40 md:pb-32 px-6">
+        <!-- Ambient Bottom Glow (Svelte Orange) -->
         <div
-            class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between"
-        >
-            <div class="flex items-center gap-3">
-                <div
-                    class="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center text-white font-mono font-bold text-xs ring-1 ring-white/20 shadow-[0_0_15px_rgba(168,85,247,0.4)]"
-                >
-                    >_
-                </div>
-                <div class="flex flex-col">
-                    <span
-                        class="font-bold text-sm tracking-tight text-white leading-none"
-                        >svelte-bash</span
-                    >
-                    <span
-                        class="text-[10px] text-zinc-500 font-medium tracking-wide"
-                        >v1.2.0</span
-                    >
-                </div>
-            </div>
-            <div class="flex items-center gap-4">
-                <a
-                    href="/examples"
-                    class="text-zinc-400 hover:text-white transition-colors text-sm font-medium mr-2"
-                >
-                    Examples
-                </a>
-                <a
-                    href="https://github.com/YusufCeng1z/svelte-bash"
-                    target="_blank"
-                    class="text-zinc-400 hover:text-white transition-colors text-sm font-medium"
-                >
-                    GitHub
-                </a>
-                <button
-                    on:click={copyInstall}
-                    class="group flex items-center gap-2 bg-white text-black rounded-full px-4 py-2 text-xs font-mono font-bold hover:bg-zinc-200 transition-all shadow-lg hover:shadow-white/20"
-                >
-                    <span>npm i svelte-bash</span>
-                    <span
-                        class="opacity-50 group-hover:opacity-100 transition-opacity ml-1"
-                        >{copied ? "✓" : "⎘"}</span
-                    >
-                </button>
-            </div>
-        </div>
-    </nav>
+            class="absolute -bottom-20 md:-bottom-40 left-0 w-full h-[400px] md:h-[600px] pointer-events-none -z-10"
+            style="background: radial-gradient(ellipse at bottom, rgba(255, 62, 0, 0.12) 0%, rgba(255, 62, 0, 0.03) 50%, transparent 75%);"
+        ></div>
 
-    <!-- HERO -->
-    <main class="relative z-10 max-w-7xl mx-auto px-6 py-24 lg:py-32">
-        <div
-            class="text-center max-w-3xl mx-auto space-y-8 mb-20 animate-in fade-in slide-in-from-bottom-8 duration-1000"
-        >
-            <div
-                class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-medium mb-4"
-            >
-                <span class="w-2 h-2 rounded-full bg-purple-500 animate-pulse"
-                ></span>
-                v1.2.0 Released: Nano Editor & Redirection Included!
-            </div>
-            <h1
-                class="text-5xl lg:text-7xl font-extrabold tracking-tight text-white"
-            >
-                The embedded terminal <br />
-                <span
-                    class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400"
-                    >for Svelte.</span
-                >
+        <div class="hero-content flex flex-col items-center gap-5 z-0">
+            <h1 class="hero-title text-white text-5xl md:text-7xl lg:text-[5.5rem] tracking-tight leading-[1.1]">
+                <span class="font-medium">The embedded terminal</span><br/>
+                <span class="font-light text-[#BFBFBF]">for Svelte</span><span class="text-[#ff3e00] font-medium">.</span>
             </h1>
-            <p class="text-lg text-zinc-400 leading-relaxed max-w-2xl mx-auto">
+            
+            <p class="hero-desc text-[#8C8C8C] max-w-2xl text-sm md:text-base leading-relaxed px-4 md:px-0 mt-2">
+                I engineer premium front-end components. <br class="hidden md:block"/>
                 A fully typed, highly customizable, zero-dependency terminal
-                component. Build interactive CLI tutorials, devtools, or
-                developer portfolios with incredible aesthetics.
+                for your interactive CLI tutorials or developer portfolios.
             </p>
-            <div
-                class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
-            >
-                <a
-                    href="https://github.com/YusufCeng1z/svelte-bash"
-                    target="_blank"
-                    class="group relative flex items-center justify-center gap-2 px-8 py-4 bg-zinc-100 text-zinc-900 rounded-full font-bold shadow-[0_0_40px_rgba(255,255,255,0.1)] hover:shadow-[0_0_60px_rgba(255,255,255,0.2)] hover:bg-white transition-all hover:-translate-y-1 w-full sm:w-auto"
-                >
-                    <svg
-                        class="w-5 h-5 text-zinc-900"
-                        aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            fill-rule="evenodd"
-                            d="M12.006 2a9.847 9.847 0 0 0-6.484 2.44 10.32 10.32 0 0 0-3.393 6.17 10.48 10.48 0 0 0 1.317 6.955 10.045 10.045 0 0 0 5.4 4.418c.504.095.683-.223.683-.494 0-.245-.01-1.052-.014-1.908-2.78.62-3.366-1.39-3.366-1.39-.455-1.178-1.11-1.492-1.11-1.492-.908-.632.069-.619.069-.619 1.003.073 1.531 1.048 1.531 1.048.892 1.56 2.341 1.109 2.91.848.092-.66.35-1.11.636-1.365-2.22-.258-4.555-1.134-4.555-5.046 0-1.116.39-2.029 1.029-2.744-.103-.26-.446-1.298.098-2.705 0 0 .84-.274 2.75 1.05a9.548 9.548 0 0 1 5.008 0c1.908-1.334 2.746-1.05 2.746-1.05.546 1.407.202 2.445.1 2.705.64.715 1.028 1.628 1.028 2.744 0 3.922-2.339 4.782-4.566 5.035.359.316.678.94.678 1.895 0 1.368-.012 2.47-.012 2.805 0 .273.18.595.688.494a10.045 10.045 0 0 0 5.401-4.418 10.478 10.478 0 0 0 1.316-6.955 10.32 10.32 0 0 0-3.393-6.17A9.847 9.847 0 0 0 12.006 2Z"
-                            clip-rule="evenodd"
-                        />
-                    </svg>
-                    Star on GitHub
-                </a>
+
+            <div class="hero-actions flex flex-col sm:flex-row gap-4 mt-6 w-full sm:w-auto">
                 <a
                     href="/examples"
-                    class="group flex items-center justify-center gap-2 px-8 py-4 bg-zinc-900 text-zinc-300 rounded-full font-medium ring-1 ring-white/10 hover:bg-zinc-800 hover:text-white transition-all hover:-translate-y-1 w-full sm:w-auto"
+                    class="flex items-center justify-center bg-white text-black h-12 px-8 rounded-xl font-medium transition-opacity hover:opacity-90 w-full sm:w-auto"
                 >
                     View Examples
-                    <span
-                        class="text-zinc-500 group-hover:translate-x-1 transition-transform"
-                        >→</span
-                    >
+                </a>
+                <a
+                    href="https://github.com/YusufCeng1z/svelte-bash"
+                    target="_blank"
+                    class="flex items-center justify-center gap-2 bg-transparent border border-white/20 text-white h-12 px-8 rounded-xl font-medium hover:bg-white/5 transition-all w-full sm:w-auto"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                    Star on GitHub
                 </a>
             </div>
         </div>
+    </div>
 
-        <!-- HERO TERMINAL -->
-        <div
-            class="glass-panel rounded-2xl overflow-hidden max-w-4xl mx-auto ring-1 ring-white/10 shadow-2xl relative transition-transform hover:-translate-y-2 duration-500"
-        >
-            <div
-                class="absolute top-0 left-0 w-full h-10 bg-zinc-900/90 border-b border-white/5 flex items-center px-4 gap-2 z-20"
-            >
-                <div class="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
-                <div class="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
-                <div class="w-3 h-3 rounded-full bg-[#27c93f]"></div>
-                <div
-                    class="ml-4 flex-1 text-center text-xs font-mono text-zinc-500 tracking-wide pr-14 select-none"
-                >
+    <!-- TERMINAL SHOWCASE -->
+    <div class="terminal-container max-w-4xl mx-auto px-6 relative z-10 -mt-10 md:-mt-20 mb-32">
+        <div class="bg-[#171717] rounded-xl relative overflow-hidden group border border-white/5 transition-colors duration-500 hover:border-white/20 shadow-2xl">
+            <div class="absolute top-0 left-0 w-full h-10 bg-[#121212] border-b border-white/5 flex items-center px-4 gap-2 z-20">
+                <div class="w-3 h-3 rounded-full border border-white/10 flex items-center justify-center text-[#8C8C8C] hover:bg-[#ff5f56] transition-colors"></div>
+                <div class="w-3 h-3 rounded-full border border-white/10 flex items-center justify-center text-[#8C8C8C] hover:bg-[#ffbd2e] transition-colors"></div>
+                <div class="w-3 h-3 rounded-full border border-white/10 flex items-center justify-center text-[#8C8C8C] hover:bg-[#27c93f] transition-colors"></div>
+                <div class="ml-4 flex-1 text-center text-xs font-mono text-[#8C8C8C] tracking-wide pr-14 select-none">
                     guest@svelte-bash:~
                 </div>
             </div>
-            <div class="pt-10 bg-[#0d0d12]">
+            <div class="pt-10 bg-[#121212]">
                 <Terminal
-                    theme="matrix"
+                    theme="dracula"
                     structure={myFiles}
                     commands={myCommands}
                     ghostCompletion={true}
@@ -220,427 +159,199 @@
                         "Type 'help' to see available commands.",
                         "Try: 'nano readme.md' or 'echo Hello > file.txt'",
                     ]}
-                    style="height: 450px; width: 100%; border:none; border-radius: 0 0 1rem 1rem;"
+                    style="height: 450px; width: 100%; border:none; border-radius: 0 0 0.75rem 0.75rem;"
                 />
             </div>
         </div>
+    </div>
 
-        <!-- QUICK START -->
-        <div class="mt-32 max-w-4xl mx-auto space-y-16">
-            <div class="text-center">
-                <h2 class="text-3xl font-bold text-white mb-4">
-                    Get Started in Seconds
+    <section class="bg-[#121212] border-y border-white/5 py-24 md:py-32">
+        <div class="container mx-auto px-6 md:px-[8vw]">
+            
+            <div class="w-full mb-16 text-center md:text-left">
+                <h2 class="text-white text-4xl md:text-5xl tracking-tight">
+                    <span class="font-medium">Quick</span>
+                    <span class="font-light text-[#BFBFBF]">Start</span>
+                    <span class="text-[#ff3e00] font-medium">.</span>
                 </h2>
-                <p class="text-zinc-400">
-                    Zero dependencies. Fully typed. Instant integration.
+                <p class="text-[#8C8C8C] mt-4 max-w-xl mx-auto md:mx-0">
+                    Instantly integrate an interactive shell into your Svelte application with minimal configuration.
                 </p>
             </div>
 
-            <div class="space-y-12">
-                <!-- Installation -->
-                <div
-                    class="glass-panel p-8 rounded-3xl relative overflow-hidden group"
-                >
-                    <div
-                        class="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    ></div>
-                    <div
-                        class="relative z-10 flex flex-col md:flex-row gap-8 items-center justify-between"
-                    >
-                        <div class="flex-1">
-                            <h3
-                                class="text-xl font-bold text-white mb-2 flex items-center gap-3"
-                            >
-                                <span
-                                    class="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 text-sm"
-                                    >1</span
-                                >
-                                Installation
-                            </h3>
-                            <p class="text-zinc-400 text-sm">
-                                Install the package via npm. It has zero
-                                external dependencies other than Svelte itself.
-                            </p>
-                        </div>
-                        <div
-                            class="w-full md:w-auto bg-black rounded-xl p-4 ring-1 ring-white/10 flex items-center gap-4"
-                        >
-                            <code class="text-green-400 font-mono text-sm"
-                                >npm install svelte-bash</code
-                            >
-                            <button
-                                class="text-zinc-500 hover:text-white transition-colors"
-                                title="Copy to clipboard"
-                                aria-label="Copy to clipboard"
-                                on:click={() =>
-                                    navigator.clipboard.writeText(
-                                        "npm install svelte-bash",
-                                    )}
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    fill="currentColor"
-                                    viewBox="0 0 16 16"
-                                    ><path
-                                        d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"
-                                    /><path
-                                        d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"
-                                    /></svg
-                                >
-                            </button>
-                        </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Code Block -->
+                <div class="bento-card w-full bg-[#171717] rounded-xl relative overflow-hidden group border border-white/5 transition-colors duration-500 hover:border-white/20">
+                    <div class="absolute top-0 left-0 w-full h-10 bg-[#121212] border-b border-white/5 flex items-center px-4 gap-2 z-20">
+                        <span class="text-xs font-mono text-[#8C8C8C]">App.svelte</span>
                     </div>
-                </div>
+                    <div class="w-full p-8 pt-16 h-full font-mono text-sm overflow-x-auto text-zinc-300">
+                        <pre><code><span class="text-zinc-500">&lt;script&gt;</span>
+  <span class="text-[#ff3e00]">import</span> &#123; Terminal &#125; <span class="text-[#ff3e00]">from</span> <span class="text-green-300">'svelte-bash'</span>;
 
-                <!-- Basic Usage -->
-                <div
-                    class="glass-panel p-8 rounded-3xl relative overflow-hidden group"
-                >
-                    <div
-                        class="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    ></div>
-                    <div class="relative z-10">
-                        <h3
-                            class="text-xl font-bold text-white mb-2 flex items-center gap-3"
-                        >
-                            <span
-                                class="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 text-sm"
-                                >2</span
-                            >
-                            Basic Usage
-                        </h3>
-                        <p class="text-zinc-400 text-sm mb-6">
-                            Import the component and pass a structure object to
-                            define your virtual file system.
-                        </p>
-
-                        <div
-                            class="rounded-xl overflow-hidden ring-1 ring-white/10 bg-[#111116] text-sm overflow-x-auto p-5 font-mono text-zinc-300 shadow-inner"
-                        >
-                            <pre><code
-                                    ><span class="text-zinc-500"
-                                        >&lt;script&gt;</span
-                                    >
-  <span class="text-pink-400">import</span> &#123; Terminal &#125; <span
-                                        class="text-pink-400">from</span
-                                    > <span class="text-green-300"
-                                        >'svelte-bash'</span
-                                    >;
-
-  <span class="text-pink-400">const</span> files = &#123;
-    <span class="text-green-300">'readme.md'</span>: <span
-                                        class="text-yellow-300"
-                                        >'# Hello World'</span
-                                    >,
-    <span class="text-green-300">'src'</span>: &#123;
-       <span class="text-green-300">'app.js'</span>: <span
-                                        class="text-yellow-300"
-                                        >'console.log("Hi")'</span
-                                    >
-    &#125;
+  <span class="text-[#ff3e00]">const</span> files = &#123;
+    <span class="text-green-300">'readme.md'</span>: <span class="text-yellow-300">'# Hello World'</span>
   &#125;;
 <span class="text-zinc-500">&lt;/script&gt;</span>
 
-<span class="text-zinc-500">&lt;</span><span class="text-indigo-400"
-                                        >Terminal</span
-                                    >
-    <span class="text-sky-300">structure</span>=&#123;files&#125;
-    <span class="text-sky-300">user</span>=<span class="text-green-300"
-                                        >"alice"</span
-                                    >
-    <span class="text-sky-300">style</span>=<span class="text-green-300"
-                                        >"height: 300px"</span
-                                    >
-<span class="text-zinc-500">/&gt;</span></code
-                                ></pre>
-                        </div>
+<span class="text-zinc-500">&lt;</span><span class="text-[#ff3e00]">Terminal</span>
+    <span class="text-indigo-300">structure</span>=&#123;files&#125;
+    <span class="text-indigo-300">theme</span>=<span class="text-green-300">"dark"</span>
+    <span class="text-indigo-300">style</span>=<span class="text-green-300">"height: 300px"</span>
+<span class="text-zinc-500">/&gt;</span></code></pre>
+                    </div>
+                </div>
+
+                <!-- Features Details -->
+                <div class="flex flex-col gap-6">
+                    <div class="bento-card w-full bg-[#171717] p-8 rounded-xl border border-white/5 transition-colors duration-500 hover:border-white/20">
+                        <h3 class="text-xl text-white font-medium mb-2">Zero Dependencies</h3>
+                        <p class="text-[#8C8C8C] text-sm leading-relaxed">
+                            Designed to be as lightweight as possible. It relies solely on Svelte's reactivity, avoiding heavy terminal emulators.
+                        </p>
+                    </div>
+                    <div class="bento-card w-full bg-[#171717] p-8 rounded-xl border border-white/5 transition-colors duration-500 hover:border-white/20">
+                        <h3 class="text-xl text-white font-medium mb-2">Highly Extensible</h3>
+                        <p class="text-[#8C8C8C] text-sm leading-relaxed">
+                            Pass custom async functions, create a virtual file system structure, and listen to programmatic events.
+                        </p>
+                    </div>
+                    <div class="bento-card w-full bg-[#171717] p-8 rounded-xl border border-white/5 transition-colors duration-500 hover:border-white/20">
+                        <h3 class="text-xl text-white font-medium mb-2">Type-Safe</h3>
+                        <p class="text-[#8C8C8C] text-sm leading-relaxed">
+                            Written entirely in TypeScript. Get full autocompletion for props and command structures right in your IDE.
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
+    </section>
 
-        <!-- BENTO BOX FEATURES -->
-        <div class="mt-40 space-y-16">
-            <div class="text-center">
-                <h2 class="text-3xl font-bold text-white mb-4">
-                    Powerful Web-Scale Features
+    <!-- THEMES SECTION -->
+    <section class="bg-[#121212] py-24 md:py-32">
+        <div class="container mx-auto px-6 md:px-[8vw]">
+            <div class="w-full mb-16 text-center md:text-left">
+                <h2 class="text-white text-4xl md:text-5xl tracking-tight">
+                    <span class="font-medium">Built-in</span>
+                    <span class="font-light text-[#BFBFBF]">Themes</span>
+                    <span class="text-[#ff3e00] font-medium">.</span>
                 </h2>
-                <p class="text-zinc-400">
-                    Everything you need to deliver a breathtaking CLI experience
-                    in the browser.
+                <p class="text-[#8C8C8C] mt-4 max-w-xl mx-auto md:mx-0">
+                    Svelte Bash ships with four beautifully crafted themes out of the box. You can also pass a custom CSS string to completely override the styling.
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- BENTO 1: Nano -->
-                <div
-                    class="glass-panel p-8 rounded-3xl lg:col-span-2 relative overflow-hidden group"
-                >
-                    <div
-                        class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    ></div>
-                    <div
-                        class="relative z-10 w-full flex flex-col h-full justify-between gap-6"
-                    >
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Theme 1: Dracula -->
+                <div class="bento-card bg-[#171717] rounded-xl border border-white/5 p-6 hover:border-white/20 transition-all">
+                    <h3 class="text-white font-medium mb-4 text-lg">Dracula</h3>
+                    <div class="rounded-lg overflow-hidden border border-white/10 shadow-lg">
+                        <Terminal theme="dracula" welcomeMessage={["$ echo 'Dracula'"]} style="height: 150px; border:none;" />
+                    </div>
+                </div>
+
+                <!-- Theme 2: Matrix -->
+                <div class="bento-card bg-[#171717] rounded-xl border border-white/5 p-6 hover:border-white/20 transition-all">
+                    <h3 class="text-white font-medium mb-4 text-lg">Matrix</h3>
+                    <div class="rounded-lg overflow-hidden border border-white/10 shadow-lg">
+                        <Terminal theme="matrix" welcomeMessage={["$ echo 'Matrix'"]} style="height: 150px; border:none;" />
+                    </div>
+                </div>
+
+                <!-- Theme 3: Dark -->
+                <div class="bento-card bg-[#171717] rounded-xl border border-white/5 p-6 hover:border-white/20 transition-all">
+                    <h3 class="text-white font-medium mb-4 text-lg">Dark</h3>
+                    <div class="rounded-lg overflow-hidden border border-white/10 shadow-lg">
+                        <Terminal theme="dark" welcomeMessage={["$ echo 'Dark'"]} style="height: 150px; border:none;" />
+                    </div>
+                </div>
+
+                <!-- Theme 4: Light -->
+                <div class="bento-card bg-[#171717] rounded-xl border border-white/5 p-6 hover:border-white/20 transition-all">
+                    <h3 class="text-white font-medium mb-4 text-lg">Light</h3>
+                    <div class="rounded-lg overflow-hidden border border-zinc-200 shadow-lg">
+                        <Terminal theme="light" welcomeMessage={["$ echo 'Light'"]} style="height: 150px; border:none;" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- WEB-SCALE FEATURES -->
+    <section class="bg-[#121212] border-y border-white/5 py-24 md:py-32">
+        <div class="container mx-auto px-6 md:px-[8vw]">
+            
+            <div class="w-full mb-16 text-center md:text-left">
+                <h2 class="text-white text-4xl md:text-5xl tracking-tight">
+                    <span class="font-medium">Web-Scale</span>
+                    <span class="font-light text-[#BFBFBF]">Features</span>
+                    <span class="text-[#ff3e00] font-medium">.</span>
+                </h2>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Card 1 -->
+                <div class="bento-card project-card w-full bg-[#171717] rounded-xl relative overflow-hidden group border border-white/5 transition-colors duration-500 hover:border-white/20">
+                    <div class="w-full p-8 md:p-10 flex flex-col justify-between h-[450px]">
                         <div>
-                            <h3 class="text-2xl font-bold text-white mb-3">
-                                Nano Editor & Redirection
-                            </h3>
-                            <p
-                                class="text-zinc-400 text-sm leading-relaxed max-w-md"
-                            >
-                                It's not just a read-only prop. Redirect outputs
-                                to files using <code>></code>. Edit them
-                                visually using the beautifully embedded
-                                <code>nano</code> clone.
+                            <span class="text-[10px] uppercase tracking-[0.2em] text-[#8C8C8C] font-bold mb-3 block">Full Experience</span>
+                            <h3 class="text-2xl text-white font-medium mb-4">Nano Editor & Redirection</h3>
+                            <p class="text-[#8C8C8C] text-sm md:text-base leading-relaxed">
+                                Redirect outputs to files using <code>&gt;</code>. Edit them visually using the beautifully embedded nano clone.
                             </p>
                         </div>
-                        <div
-                            class="rounded-xl overflow-hidden ring-1 ring-white/10 bg-black shadow-lg"
-                        >
+                        <div class="rounded-xl overflow-hidden border border-white/5 bg-[#121212] shadow-lg">
                             <Terminal
                                 theme="dark"
                                 welcomeMessage={[
                                     "$ echo 'Svelte is awesome' > data.txt",
                                     "$ nano data.txt",
                                 ]}
-                                style="height: 250px; border:none;"
+                                style="height: 200px; border:none;"
                             />
                         </div>
                     </div>
                 </div>
 
-                <!-- BENTO 2: Bootplay -->
-                <div
-                    class="glass-panel p-8 rounded-3xl relative overflow-hidden group flex flex-col justify-between"
-                >
-                    <div
-                        class="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    ></div>
-                    <div class="relative z-10 mb-6">
-                        <h3 class="text-xl font-bold text-white mb-3">
-                            Bootplay Engine
-                        </h3>
-                        <p class="text-zinc-400 text-sm leading-relaxed">
-                            Simulate rapid boot sequences or server startup logs
-                            with the ultra-fast <code>bootplay</code> engine.
-                        </p>
-                    </div>
-                    <div
-                        class="rounded-xl overflow-hidden ring-1 ring-white/10 bg-[#282a36] shadow-lg relative z-10"
-                    >
-                        <Terminal
-                            theme="dracula"
-                            bootplay={[
-                                { output: "Mounting virtual file system..." },
-                                { output: "[ OK ] Reached target Local FS." },
-                                { output: "Starting Network Service..." },
-                                { output: "[ OK ] Network activated." },
-                                { output: "Running svelte-check..." },
-                                { output: "Started SvelteKit server on :5173" },
-                            ]}
-                            welcomeMessage=""
-                            style="height: 250px; border:none;"
-                        />
-                    </div>
-                </div>
-
-                <!-- BENTO 3: Persistence -->
-                <div
-                    class="glass-panel p-8 rounded-3xl relative overflow-hidden group"
-                >
-                    <div
-                        class="absolute inset-0 bg-gradient-to-tr from-orange-500/10 to-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    ></div>
-                    <div class="relative z-10">
-                        <h3 class="text-xl font-bold text-white mb-3">
-                            Zero-Config Persistence
-                        </h3>
-                        <p class="text-zinc-400 text-sm mb-8 leading-relaxed">
-                            Pass a single string to the <code>persist</code>
-                            prop and your filesystem state mathematically synchronizes
-                            with <code>localStorage</code> securely.
-                        </p>
-                        <div
-                            class="rounded-xl bg-zinc-950/80 border border-white/5 p-5 font-mono text-sm text-pink-400 shadow-inner"
-                        >
-                            <span class="text-zinc-500">&lt;</span><span
-                                class="text-indigo-400">Terminal</span
-                            > <br />
-                            &nbsp;&nbsp;<span class="text-sky-300">persist</span
-                            ><span class="text-white">=</span><span
-                                class="text-green-300">"my-app-fs"</span
-                            > <br />
-                            <span class="text-zinc-500">/&gt;</span>
+                <!-- Card 2 -->
+                <div class="bento-card project-card w-full bg-[#171717] rounded-xl relative overflow-hidden group border border-white/5 transition-colors duration-500 hover:border-white/20">
+                    <div class="w-full p-8 md:p-10 flex flex-col justify-between h-[450px]">
+                        <div>
+                            <span class="text-[10px] uppercase tracking-[0.2em] text-[#8C8C8C] font-bold mb-3 block">Performance</span>
+                            <h3 class="text-2xl text-white font-medium mb-4">Bootplay Engine</h3>
+                            <p class="text-[#8C8C8C] text-sm md:text-base leading-relaxed">
+                                Simulate rapid boot sequences or server startup logs with the ultra-fast bootplay engine.
+                            </p>
+                        </div>
+                        <div class="rounded-xl overflow-hidden border border-white/5 bg-[#121212] shadow-lg">
+                            <Terminal
+                                theme="dark"
+                                bootplay={[
+                                    { output: "Mounting virtual file system..." },
+                                    { output: "[ OK ] Reached target Local FS." },
+                                    { output: "Starting Network Service..." },
+                                    { output: "[ OK ] Network activated." },
+                                ]}
+                                welcomeMessage=""
+                                style="height: 200px; border:none;"
+                            />
                         </div>
                     </div>
                 </div>
 
-                <!-- BENTO 4: Commands -->
-                <div
-                    class="glass-panel p-8 rounded-3xl lg:col-span-2 relative overflow-hidden group flex flex-col"
-                >
-                    <div
-                        class="absolute inset-0 bg-gradient-to-tl from-sky-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    ></div>
-                    <div class="relative z-10 mb-6 flex-1">
-                        <h3 class="text-2xl font-bold text-white mb-3">
-                            Programmatic Commands & Aliases
-                        </h3>
-                        <p class="text-zinc-400 text-sm leading-relaxed">
-                            Extend the terminal dynamically. Inject async
-                            callbacks. Map complex commands to short snippets
-                            using aliases.
-                        </p>
-                    </div>
-                    <div
-                        class="rounded-xl overflow-hidden ring-1 ring-white/10 bg-[#1e1e1e] shadow-lg relative z-10"
-                    >
-                        <Terminal
-                            theme="dark"
-                            welcomeMessage={[
-                                "$ alias deploy='npm run build && firebase deploy'",
-                                "$ deploy",
-                            ]}
-                            autoplay={[
-                                {
-                                    command:
-                                        "alias deploy='npm run build && firebase deploy'",
-                                },
-                                {
-                                    command: "deploy",
-                                    output: "Building project...\n[success] Deployed to production.",
-                                },
-                            ]}
-                            style="height: 200px; border:none;"
-                        />
-                    </div>
-                </div>
             </div>
         </div>
+    </section>
 
-        <!-- API Reference -->
-        <div class="mt-40 pt-16 border-t border-white/10">
-            <h2 class="text-3xl font-bold text-white mb-8 text-center">
-                Engineered for Developers
-            </h2>
-            <div class="glass-panel rounded-3xl overflow-x-auto shadow-2xl">
-                <table class="w-full text-left text-sm border-collapse">
-                    <thead>
-                        <tr
-                            class="border-b border-white/10 bg-white/5 backdrop-blur-md"
-                        >
-                            <th class="py-5 px-8 font-semibold text-white"
-                                >Property</th
-                            >
-                            <th class="py-5 px-8 font-semibold text-white"
-                                >TypeScript Type</th
-                            >
-                            <th class="py-5 px-8 font-semibold text-white"
-                                >Default Value</th
-                            >
-                        </tr>
-                    </thead>
-                    <tbody
-                        class="divide-y divide-white/5 text-zinc-300 bg-black/20"
-                    >
-                        <tr class="hover:bg-white/5 transition-colors">
-                            <td class="py-5 px-8 font-mono text-purple-400"
-                                >structure</td
-                            >
-                            <td
-                                class="py-5 px-8 font-mono text-xs text-indigo-300"
-                                >FileStructure</td
-                            >
-                            <td
-                                class="py-5 px-8 font-mono text-xs text-zinc-500"
-                                >{"{"}{"}"}</td
-                            >
-                        </tr>
-                        <tr class="hover:bg-white/5 transition-colors">
-                            <td class="py-5 px-8 font-mono text-purple-400"
-                                >commands</td
-                            >
-                            <td
-                                class="py-5 px-8 font-mono text-xs text-indigo-300"
-                                >Record&lt;string, CommandHandler&gt;</td
-                            >
-                            <td
-                                class="py-5 px-8 font-mono text-xs text-zinc-500"
-                                >{"{"}{"}"}</td
-                            >
-                        </tr>
-                        <tr class="hover:bg-white/5 transition-colors">
-                            <td class="py-5 px-8 font-mono text-purple-400"
-                                >theme</td
-                            >
-                            <td
-                                class="py-5 px-8 font-mono text-xs text-indigo-300"
-                                >'dark' | 'light' | 'matrix' | 'dracula' | Theme</td
-                            >
-                            <td
-                                class="py-5 px-8 font-mono text-xs text-zinc-500"
-                                >'dark'</td
-                            >
-                        </tr>
-                        <tr class="hover:bg-white/5 transition-colors">
-                            <td class="py-5 px-8 font-mono text-purple-400"
-                                >persist</td
-                            >
-                            <td
-                                class="py-5 px-8 font-mono text-xs text-indigo-300"
-                                >string</td
-                            >
-                            <td
-                                class="py-5 px-8 font-mono text-xs text-zinc-500"
-                                >undefined</td
-                            >
-                        </tr>
-                        <tr class="hover:bg-white/5 transition-colors">
-                            <td class="py-5 px-8 font-mono text-purple-400"
-                                >bootplay</td
-                            >
-                            <td
-                                class="py-5 px-8 font-mono text-xs text-indigo-300"
-                                >string[]</td
-                            >
-                            <td
-                                class="py-5 px-8 font-mono text-xs text-zinc-500"
-                                >undefined</td
-                            >
-                        </tr>
-                        <tr class="hover:bg-white/5 transition-colors">
-                            <td class="py-5 px-8 font-mono text-purple-400"
-                                >autoplay</td
-                            >
-                            <td
-                                class="py-5 px-8 font-mono text-xs text-indigo-300"
-                                >AutoplayItem[]</td
-                            >
-                            <td
-                                class="py-5 px-8 font-mono text-xs text-zinc-500"
-                                >undefined</td
-                            >
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- FOOTER -->
-        <footer
-            class="mt-40 pt-10 border-t border-white/10 text-center text-zinc-500 text-sm pb-10"
-        >
-            Engineered with <span class="text-purple-500 pulse">♥️</span> for
+    <!-- FOOTER -->
+    <footer class="py-10 flex flex-col items-center justify-center text-[#8C8C8C] text-sm mt-20 gap-2">
+        <p>
+            Engineered with <span class="text-[#ff3e00]">♥️</span> for
             the Svelte Community by
-            <a
-                href="https://github.com/YusufCeng1z"
-                target="_blank"
-                class="text-zinc-300 hover:text-white font-medium transition-colors"
-                >YusufCeng1z</a
-            >.
-        </footer>
-    </main>
+            <a href="https://github.com/YusufCeng1z" target="_blank" class="text-white hover:text-[#ff3e00] font-medium transition-colors">YusufCeng1z</a>.
+        </p>
+        <p class="text-xs">
+            Visit <a href="https://yusufcengiz.dev" target="_blank" class="text-[#BFBFBF] hover:text-white underline decoration-white/20 underline-offset-4 transition-colors">yusufcengiz.dev</a> for more.
+        </p>
+    </footer>
 </div>

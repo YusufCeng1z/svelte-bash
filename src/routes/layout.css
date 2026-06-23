@@ -2,8 +2,15 @@
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 
+@theme {
+  --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-unbounded: 'Unbounded', sans-serif;
+}
+
 body {
-    font-family: 'Inter', sans-serif;
-    background-color: #09090b; /* Zinc 950 */
-    color: #e4e4e7; /* Zinc 200 */
+    font-family: 'Instrument Sans', sans-serif;
+    background-color: #121212;
+    color: #e4e4e7;
+    margin: 0;
+    padding: 0;
 }
