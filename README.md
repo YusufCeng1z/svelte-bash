@@ -229,7 +229,7 @@ Svelte Bash allows comprehensive styling customization.
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-[![Star History Chart](https://starhistory.link/YusufCeng1z/svelte-bash.svg?theme=amber)](https://starhistory.link/YusufCeng1z/svelte-bash)
+[![Star History Chart](https://starhistory.link/YusufCeng1z/svelte-bash.svg?theme=amber&style=glass)](https://starhistory.link/YusufCeng1z/svelte-bash)
 
 ## License
 
